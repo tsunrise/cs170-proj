@@ -92,6 +92,9 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
 
             if bee.unimprovedTimes > fire_limit:
                 bee.scout()
+            
+            # reset bee improved list
+            isBeeImproved[index] = False
         
     # Final Decision
     bestBee = min(bees, key=lambda b: b.currentCost)
