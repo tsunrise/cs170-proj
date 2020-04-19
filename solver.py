@@ -38,7 +38,6 @@ class EmployedBee:
         ...
         # TODO: ADD CODE HERE (update current cost)
 
-
 def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int) -> nxGraph:
     """
     The artificial bee algorithm. Return an approximate connected dominating tree with minimum routing cost. 
@@ -54,13 +53,14 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
         T = randomDominatingTree(G)
         bees.append(EmployedBee(T, G))
 
-
-
+    bestBee: EmployedBee = bees[0]
     # Iteration stage
     for curr_iter in range(n_iter):
         # Each employed bee calls find_neighbor to try to find a solution toward its local optimum.
         for index, bee in enumerate(bees):
             improved = bee.work() # employ(S)
+            if bee.currentCost < bestBee.currentCost:
+                bestBee = bee
             if improved:
                 isBeeImproved[index] = True
 
@@ -77,6 +77,8 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
             selectedBee = bees[second_random_index]
             selectedIndex = second_random_index
 
+        if selectedBee.currentCost < bestBee.currentCost:
+            bestBee = selectedBee
         improved = selectedBee.work()
         if improved:
             isBeeImproved[selectedIndex] = True
@@ -97,7 +99,6 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
             isBeeImproved[index] = False
         
     # Final Decision
-    bestBee = min(bees, key=lambda b: b.currentCost)
     return bestBee.solution
 
 
