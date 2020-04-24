@@ -80,10 +80,8 @@ class EmployedBee:
         Try to Find a neighbor solution. Return true if the solution improves (cost goes down). 
         """
 
-        # TODO: find_neighbor
+        # TODO: ADD CODE HERE (find_neighbor)
         
-
-
         # TODO: ADD CODE HERE (update current cost)
 
 def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int) -> nxGraph:
