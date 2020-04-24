@@ -57,21 +57,23 @@ def randomizedGraph(G: nxGraph, variation: float, floor: float = 1e-3) -> nxGrap
     
     return nG
 
-        
-
 
 class EmployedBee:
 
-    def __init__(self, T: nxGraph, G: nxGraph):
-        self.solution: nxGraph = T
+    def __init__(self, G: nxGraph):
+        self.solution: nxGraph = None
         self.G: nxGraph = G
         self.unimprovedTimes: int = 0
         self.currentCost: float = average_pairwise_distance_fast(self.solution)
+        self.leaves = []
+        self.scout()
 
     def scout(self) -> None:
         self.solution = randomDominatingTree(self.G)
         self.unimprovedTimes = 0
         self.currentCost = average_pairwise_distance_fast(self.solution)
+        
+        # find leaves in the tree
 
     def work(self) -> bool: # find neighbor
         """
@@ -79,7 +81,7 @@ class EmployedBee:
         """
 
         # TODO: ADD CODE HERE (find_neighbor)
-        ...
+        
         # TODO: ADD CODE HERE (update current cost)
 
 def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int) -> nxGraph:
@@ -95,7 +97,7 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
 
     for i in range(n_employed):
         T = randomDominatingTree(G)
-        bees.append(EmployedBee(T, G))
+        bees.append(EmployedBee(T))
 
     bestBee: EmployedBee = bees[0]
     # Iteration stage
