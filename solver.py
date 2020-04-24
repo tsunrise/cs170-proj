@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Dict
 import networkx as nx
 from parse import read_input_file, write_output_file
 from utils import average_pairwise_distance_fast, is_valid_network, average_pairwise_distance
@@ -9,12 +9,56 @@ import sys
 
 nxGraph = nx.classes.Graph
 
+# CONSTANTS
+
+RANDOMIZED_WEIGHT_VARIATION: float = 0.35
+
 def randomDominatingTree(G: nxGraph) -> nxGraph:
     """
     Generate a random dominating tree basing on heuristics. 
+    This algorithm randomly selects some strategies: randomized minimum spanning tree, randomized shortest path tree
     """
 
-    pass
+    # current baseline approach: 
+    rG = randomizedGraph(G, RANDOMIZED_WEIGHT_VARIATION)
+
+    useMST: bool = random.choice([True, False])
+
+    if useMST:
+        return nx.minimum_spanning_tree(rG, weight='r_weight')
+    else:
+        # find a random starting vertex
+        start: int = random.choice(list(G.nodes))
+        paths = nx.single_source_dijkstra(rG, start, weight='r_weight')[1]
+        nG = nx.Graph()
+        nG.add_nodes_from(G.nodes)
+        for dest in paths:
+            path: List[int] = paths[dest]
+            for i in range(len(path) - 1):
+                a, b = path[i], path[i+1]
+                if not nG.has_edge(a, b):
+                    nG.add_edge(a, b)
+                    nG[a][b]['weight'] = G[a][b]['weight']
+        
+        return nG
+
+
+def randomizedGraph(G: nxGraph, variation: float, floor: float = 1e-3) -> nxGraph:
+    """
+    Generate a randomized graph. The weight is randomized in the way that the new weight of the edge is sample from 
+    original weight * (1 +- Normal(0, variation))
+    floor: the minimum weight of an edge allowed
+    """
+
+    nG: nxGraph = G.copy()
+    for u, vs in nG.adjacency():
+        for v in vs:
+            nG[u][v]['r_weight'] = max(G[u][v]['weight'] * (1 + random.normalvariate(0, variation)), floor)
+    
+    return nG
+
+        
+
 
 class EmployedBee:
 
