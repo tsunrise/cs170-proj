@@ -64,7 +64,6 @@ class EmployedBee:
         self.solution: nxGraph = None
         self.G: nxGraph = G
         self.unimprovedTimes: int = 0
-        self.currentCost: float = average_pairwise_distance_fast(self.solution)
         self.leaves = []
         self.scout()
 
