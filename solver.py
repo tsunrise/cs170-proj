@@ -99,6 +99,11 @@ class EmployedBee:
         # try to randomly remove a leaf
         T = self.solution
 
+        if (len(T) == 1):
+            new_cost = 0
+            self.currentCost = new_cost
+            return True # early termination: solution cost  = 0
+
         toRemoveLeafIndex = random.randint(0, len(self.leaves) - 1)
         toRemove = self.leaves.pop(toRemoveLeafIndex)
 
@@ -114,7 +119,12 @@ class EmployedBee:
             self.leaves.append(toRemove)
             return False
         
-        new_cost = average_pairwise_distance_fast(T)
+        if (len(T) == 1):
+            new_cost = 0
+            self.currentCost = new_cost
+            return True # early termination: solution cost  = 0
+        else:
+            new_cost = average_pairwise_distance_fast(T)
         if new_cost > self.currentCost:
             # restore T and give up
             T.add_node(toRemove)
@@ -193,7 +203,10 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
         
         if log and curr_iter % 100 == 0:
             print("At iteration %d, the best cost is %f, %d scouts are called" % (curr_iter, bestBee.currentCost, bee_counter))
-        
+        if bestBee.currentCost - 0 < 1e-5:
+            if log:
+                print("Found a bee whose cost is zero! Program finished early at iteration %d. " % curr_iter)
+            return bestBee.solution
     # Final Decision
     return bestBee.solution
 
