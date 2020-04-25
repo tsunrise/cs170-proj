@@ -73,7 +73,10 @@ class EmployedBee:
     def scout(self) -> None:
         self.solution = randomDominatingTree(self.G)
         self.unimprovedTimes = 0
-        self.currentCost = average_pairwise_distance_fast(self.solution)
+        if len(self.solution) == 1:
+            self.currentCost = 0
+        else:
+            self.currentCost = average_pairwise_distance_fast(self.solution)
         self.leaves = []
         
         # find leaves in the tree
