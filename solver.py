@@ -139,9 +139,10 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
     bees: List[EmployedBee] = []
     isBeeImproved: List[bool]= [False] * n_employed
 
+
     for i in range(n_employed):
         bees.append(EmployedBee(G))
-
+    bee_counter = len(bees) # for statistics only
     bestBee: EmployedBee = bees[0]
     # Iteration stage
     for curr_iter in range(n_iter):
@@ -185,12 +186,13 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
                 if bee == bestBee:
                     bestBee = bestBee.copy()
                 bee.scout()
+                bee_counter += 1
             
             # reset bee improved list
             isBeeImproved[index] = False
         
         if log and curr_iter % 100 == 0:
-            print("At iteration %d, the best cost is %f" % (curr_iter, bestBee.currentCost))
+            print("At iteration %d, the best cost is %f, %d scouts are called" % (curr_iter, bestBee.currentCost, bee_counter))
         
     # Final Decision
     return bestBee.solution
