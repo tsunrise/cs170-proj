@@ -64,7 +64,7 @@ class EmployedBee:
         self.solution: nxGraph = None
         self.G: nxGraph = G
         self.unimprovedTimes: int = 0
-        self.leaves = []
+        self.leaves: List[int] = []
         self.scout()
 
     def scout(self) -> None:
@@ -73,15 +73,45 @@ class EmployedBee:
         self.currentCost = average_pairwise_distance_fast(self.solution)
         
         # find leaves in the tree
+        for v in self.solution.nodes:
+            if len(self.solution[v]) == 1:
+                self.leaves.append(v)
 
     def work(self) -> bool: # find neighbor
         """
         Try to Find a neighbor solution. Return true if the solution improves (cost goes down). 
         """
 
-        # TODO: ADD CODE HERE (find_neighbor)
+        # find_neighbor
+
+        # try to randomly remove a leaf
+        T = self.solution
+
+        toRemoveLeafIndex = random.randint(0, len(self.leaves) - 1)
+        toRemove = self.leaves.pop(toRemoveLeafIndex)
+
+        parent = list(T[toRemove])[0]
+        edge_weight = T[parent][toRemove]['weight']
+        T.remove_node(toRemove)
+
+        if not is_valid_network(self.G, T):
+            # restore T and give up
+            T.add_node(toRemove)
+            T.add_edge(parent, toRemove, weight = edge_weight)
+            self.leaves.append(toRemove)
+            return False
         
-        # TODO: ADD CODE HERE (update current cost)
+        new_cost = average_pairwise_distance_fast(T)
+        if new_cost > self.currentCost:
+            # restore T and give up
+            T.add_node(toRemove)
+            T.add_edge(parent, toRemove, weight = edge_weight)
+            self.leaves.append(toRemove)
+            return False
+        
+        # update success
+        self.currentCost = new_cost
+        return True
 
 def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int) -> nxGraph:
     """
