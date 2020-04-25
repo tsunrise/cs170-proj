@@ -1,4 +1,4 @@
 *.pyc
 .vscode/
-inputs/
+outputs/
 *.in
