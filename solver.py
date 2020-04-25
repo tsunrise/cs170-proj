@@ -60,7 +60,10 @@ def randomizedGraph(G: nxGraph, variation: float, floor: float = 1e-3) -> nxGrap
 
 class EmployedBee:
 
-    def __init__(self, G: nxGraph):
+    def __init__(self, G: nxGraph, empty: bool = False):
+        if empty:
+            self.G = G
+            return
         self.solution: nxGraph = None
         self.G: nxGraph = G
         self.unimprovedTimes: int = 0
@@ -71,11 +74,20 @@ class EmployedBee:
         self.solution = randomDominatingTree(self.G)
         self.unimprovedTimes = 0
         self.currentCost = average_pairwise_distance_fast(self.solution)
+        self.leaves = []
         
         # find leaves in the tree
         for v in self.solution.nodes:
             if len(self.solution[v]) == 1:
                 self.leaves.append(v)
+
+    def copy(self):
+        b: EmployedBee = EmployedBee(self.G, empty = True)
+        b.solution = self.solution.copy()
+        b.unimprovedTimes = self.unimprovedTimes
+        b.leaves = self.leaves.copy()
+        b.currentCost = self.currentCost
+        return b
 
     def work(self) -> bool: # find neighbor
         """
@@ -91,6 +103,7 @@ class EmployedBee:
         toRemove = self.leaves.pop(toRemoveLeafIndex)
 
         parent = list(T[toRemove])[0]
+
         edge_weight = T[parent][toRemove]['weight']
         T.remove_node(toRemove)
 
@@ -109,11 +122,13 @@ class EmployedBee:
             self.leaves.append(toRemove)
             return False
         
-        # update success
+        # update success and add parent to leaves if possible
         self.currentCost = new_cost
+        if len(T[parent]) == 1:
+            self.leaves.append(parent)
         return True
 
-def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int) -> nxGraph:
+def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int, log: bool = False) -> nxGraph:
     """
     The artificial bee algorithm. Return an approximate connected dominating tree with minimum routing cost. 
     n_iter: the total number of iterations
@@ -125,8 +140,7 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
     isBeeImproved: List[bool]= [False] * n_employed
 
     for i in range(n_employed):
-        T = randomDominatingTree(G)
-        bees.append(EmployedBee(T))
+        bees.append(EmployedBee(G))
 
     bestBee: EmployedBee = bees[0]
     # Iteration stage
@@ -152,9 +166,9 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
             selectedBee = bees[second_random_index]
             selectedIndex = second_random_index
 
+        improved = selectedBee.work()
         if selectedBee.currentCost < bestBee.currentCost:
             bestBee = selectedBee
-        improved = selectedBee.work()
         if improved:
             isBeeImproved[selectedIndex] = True
 
@@ -168,10 +182,15 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
                 bee.unimprovedTimes += 1
 
             if bee.unimprovedTimes > fire_limit:
+                if bee == bestBee:
+                    bestBee = bestBee.copy()
                 bee.scout()
             
             # reset bee improved list
             isBeeImproved[index] = False
+        
+        if log and curr_iter % 100 == 0:
+            print("At iteration %d, the best cost is %f" % (curr_iter, bestBee.currentCost))
         
     # Final Decision
     return bestBee.solution
