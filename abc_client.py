@@ -23,7 +23,7 @@ def solveFile(fileName: str) -> bool:
     try:
         G = read_input_file("./inputs/%s.in" % fileName)
         T = solver.ABC(G, N_EMPLOYED, N_ONLOOKER, N_ITERATIONS, FIRE_LIMIT)
-        assert(is_valid_network)
+        assert(is_valid_network(G, T))
         write_output_file(T, "./outputs/%s.out" % fileName)
         return True
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         failure = []
         for task in tasks:
             count += 1
-            print("Solving: %s (%d/%d)" % (task, count, len(tasks)))
+            # print("Solving: %s (%d/%d)" % (task, count, len(tasks)))
             success = solveFile(task)
             if not success:
                 failure.append(task)
@@ -64,6 +64,7 @@ if __name__ == "__main__":
             run a thread task: n is number of cores
             """
 
+            print("Start Thread: %d/%d" % (thread_num, n))
             subtasks = []
             for i in range(thread_num, len(tasks), n):
                 subtasks.append(tasks[i])
@@ -71,7 +72,7 @@ if __name__ == "__main__":
             failure = []
             for task in subtasks:
                 count += 1
-                print("Thread %d is solving: %s (%d/%d)" % (thread_num, task, count, len(subtasks)))
+                # print("Thread %d is solving: %s (%d/%d)" % (thread_num, task, count, len(subtasks)))
                 success = solveFile(task)
                 if not success:
                     failure.append(task)
@@ -79,6 +80,8 @@ if __name__ == "__main__":
                 print("Thread %d reports that %d/%d files are not solved successfully. Please check. " % (thread_num, len(failure), len(subtasks)))
                 for f in failure:
                     print("FAIL: " + f)
+            else:
+                print("Thread %d complete. " % thread_num)
         
         threads:List[multiprocessing.Process] = []
         for i in range(num_cores):
