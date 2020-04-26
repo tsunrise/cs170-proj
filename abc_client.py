@@ -1,3 +1,5 @@
+#!/usr/bin/env python3 
+
 from typing import List, Tuple, Dict
 import networkx as nx
 from parse import read_input_file, write_output_file
@@ -9,9 +11,9 @@ import multiprocessing
 import os
 
 solver.RANDOMIZED_WEIGHT_VARIATION = 0.35 # graph randomized level
-N_EMPLOYED = 15 # number of employed bees
-N_ONLOOKER = 3 # number of onlooker bees
-N_ITERATIONS = 1400 # number of iterations of ABC
+N_EMPLOYED = 20 # number of employed bees
+N_ONLOOKER = 5 # number of onlooker bees
+N_ITERATIONS = 50000 # number of iterations of ABC
 FIRE_LIMIT = 100 # maximum iterations allowed for a bee to not discover a better option
 
 def solveFile(fileName: str) -> bool:
@@ -83,6 +85,9 @@ if __name__ == "__main__":
             else:
                 print("Thread %d complete. " % thread_num)
         
+        # task randomization
+        random.shuffle(tasks)
+
         threads:List[multiprocessing.Process] = []
         for i in range(num_cores):
             t = multiprocessing.Process(target=thread_task, args=(i, num_cores, tasks))
