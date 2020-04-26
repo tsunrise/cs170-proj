@@ -4,6 +4,7 @@ from parse import read_input_file, write_output_file
 from utils import average_pairwise_distance_fast, is_valid_network, average_pairwise_distance
 import random
 import sys
+from networkx.algorithms import approximation
 
 # TYPE DEFINITION
 
@@ -141,6 +142,14 @@ class EmployedBee:
             self.leaves.append(parent)
         return True
 
+def zeroCostCheck(G: nxGraph) -> int:
+    n = len(G)
+    for v, dic in G.adjacency():
+        if len(dic) == n-1:
+            return v
+    return -1
+
+
 def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int, log: bool = False) -> nxGraph:
     """
     The artificial bee algorithm. Return an approximate connected dominating tree with minimum routing cost. 
@@ -148,6 +157,16 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
     fire_limit: the maximum number of iterations that a bee does not improve its solution (if the limit is exceeded, the bee scouts)
     """
     
+    # pre-sanity-check: zero-cost tree
+    pre_master_v: int = zeroCostCheck(G)
+    if pre_master_v != -1:
+        if log:
+            print("Tree has zero cost. All Iterations skipped. ")
+        T = nxGraph()
+        T.add_node(pre_master_v)
+        return T
+
+
     # initialize employed bees
     bees: List[EmployedBee] = []
     isBeeImproved: List[bool]= [False] * n_employed
