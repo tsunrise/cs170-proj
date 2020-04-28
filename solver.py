@@ -13,6 +13,7 @@ nxGraph = nx.classes.Graph
 # CONSTANTS
 
 RANDOMIZED_WEIGHT_VARIATION: float = 0.35
+REGRET_PRUNE_RATE: float = 0.18
 
 def randomDominatingTree(G: nxGraph) -> nxGraph:
     """
@@ -65,10 +66,14 @@ class EmployedBee:
         if empty:
             self.G = G
             return
+        self.id = ''.join(random.choice("abcdefghijklmnopqrstuvwxyz1234567890") for i in range(8))
         self.solution: nxGraph = None
         self.G: nxGraph = G
         self.unimprovedTimes: int = 0
         self.leaves: List[int] = []
+        self.regretTree: nxGraph = None  # when the program decides to prune a leaf even when it knows the cost will increase, the program store the previous tree
+        self.regretLeaves: List[int] = []
+        self.regretTreeCost: float = 0
         self.scout()
 
     def scout(self) -> None:
@@ -91,6 +96,14 @@ class EmployedBee:
         b.unimprovedTimes = self.unimprovedTimes
         b.leaves = self.leaves.copy()
         b.currentCost = self.currentCost
+        if self.regretTree is not None:
+            b.regretTree = self.regretTree.copy()
+        else:
+            b.regretTree = None
+        b.regretTreeCost = self.regretTreeCost
+        b.regretLeaves = self.regretLeaves.copy()
+        b.id = self.id
+        
         return b
 
     def work(self) -> bool: # find neighbor
@@ -116,7 +129,7 @@ class EmployedBee:
         edge_weight = T[parent][toRemove]['weight']
         T.remove_node(toRemove)
 
-        if not is_valid_network(self.G, T):
+        if len(T) == 0 or not is_valid_network(self.G, T):
             # restore T and give up
             T.add_node(toRemove)
             T.add_edge(parent, toRemove, weight = edge_weight)
@@ -130,11 +143,26 @@ class EmployedBee:
         else:
             new_cost = average_pairwise_distance_fast(T)
         if new_cost > self.currentCost:
-            # restore T and give up
-            T.add_node(toRemove)
-            T.add_edge(parent, toRemove, weight = edge_weight)
-            self.leaves.append(toRemove)
-            return False
+            chance = random.random()
+            if chance < REGRET_PRUNE_RATE and len(self.leaves) > 1:
+                # do not restore, regret pruning (prune even if cost goes up)
+                if self.regretTree is None or new_cost < self.regretTreeCost:
+                    self.regretTree = T.copy()
+                    self.regretTree.add_node(toRemove)
+                    self.regretTree.add_edge(parent, toRemove, weight = edge_weight)
+                    self.regretLeaves = self.leaves.copy()
+                    self.regretLeaves.append(toRemove)
+                    self.regretTreeCost = self.currentCost
+                self.currentCost = new_cost
+                if len(T[parent]) == 1:
+                    self.leaves.append(parent)
+                return False
+            else:
+                # restore T and give up
+                T.add_node(toRemove)
+                T.add_edge(parent, toRemove, weight = edge_weight)
+                self.leaves.append(toRemove)
+                return False
         
         # update success and add parent to leaves if possible
         self.currentCost = new_cost
@@ -142,6 +170,27 @@ class EmployedBee:
             self.leaves.append(parent)
         return True
 
+    def getSolution(self) -> nxGraph:
+        if self.regretTree is not None and self.regretTreeCost < self.currentCost:
+            return self.regretTree
+        return self.solution
+    
+    def getSolutionCost(self) -> float:
+        if self.regretTree is not None and self.regretTreeCost < self.currentCost:
+            return self.regretTreeCost
+        return self.currentCost
+
+    def restoreBest(self) -> bool:
+        # restore to prior-prune state. No regret. 
+        if self.regretTree is not None and self.currentCost > self.regretTreeCost:
+            self.solution = self.regretTree.copy()
+            self.currentCost = self.regretTreeCost
+            self.regretTree = None
+            self.leaves = self.regretLeaves.copy()
+            self.regretLeaves = []
+            return True
+
+        return False
 def zeroCostCheck(G: nxGraph) -> int:
     n = len(G)
     for v, dic in G.adjacency():
@@ -181,7 +230,7 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
         # Each employed bee calls find_neighbor to try to find a solution toward its local optimum.
         for index, bee in enumerate(bees):
             improved = bee.work() # employ(S)
-            if bee.currentCost < bestBee.currentCost:
+            if bee.getSolutionCost() < bestBee.getSolutionCost():
                 bestBee = bee
             if improved:
                 isBeeImproved[index] = True
@@ -195,12 +244,12 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
 
         selectedBee: EmployedBee = bees[first_random_index]
         selectedIndex: int = first_random_index
-        if bees[first_random_index].currentCost > bees[second_random_index].currentCost:
+        if bees[first_random_index].currentCost > bees[second_random_index].currentCost: # use current working tree cost instead of regret cost
             selectedBee = bees[second_random_index]
             selectedIndex = second_random_index
 
         improved = selectedBee.work()
-        if selectedBee.currentCost < bestBee.currentCost:
+        if selectedBee.getSolutionCost() < bestBee.getSolutionCost():
             bestBee = selectedBee
         if improved:
             isBeeImproved[selectedIndex] = True
@@ -214,6 +263,9 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
             else:
                 bee.unimprovedTimes += 1
 
+            if bee.unimprovedTimes >= fire_limit // 2:
+                restored = bee.restoreBest() # restore to regret tree state
+
             if bee.unimprovedTimes > fire_limit:
                 if bee == bestBee:
                     bestBee = bestBee.copy()
@@ -224,8 +276,8 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
             isBeeImproved[index] = False
         
         if log and curr_iter % 100 == 0:
-            print("At iteration %d, the best cost is %f, %d scouts are called" % (curr_iter, bestBee.currentCost, bee_counter))
-        if bestBee.currentCost - 0 < 1e-5:
+            print("At iteration %d, the best cost is %f (working: %f, regret: %f, bee_id: %s), %d scouts are called" % (curr_iter, bestBee.getSolutionCost(), bestBee.currentCost, bestBee.regretTreeCost if bestBee.regretTree is not None else -1, bestBee.id, bee_counter))
+        if bestBee.getSolutionCost() - 0 < 1e-5:
             if log:
                 print("Found a bee whose cost is zero! Program finished early at iteration %d. " % curr_iter)
             return bestBee.solution
