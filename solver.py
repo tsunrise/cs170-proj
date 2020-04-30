@@ -12,17 +12,22 @@ nxGraph = nx.classes.Graph
 
 # CONSTANTS
 
+VERSION = "regretV2"
+
 RANDOMIZED_WEIGHT_VARIATION: float = 0.35
 REGRET_PRUNE_RATE: float = 0.18
 
-def randomDominatingTree(G: nxGraph) -> nxGraph:
+def randomDominatingTree(G: nxGraph, init: bool = False) -> nxGraph:
     """
     Generate a random dominating tree basing on heuristics. 
     This algorithm randomly selects some strategies: randomized minimum spanning tree, randomized shortest path tree
     """
 
     # current baseline approach: 
-    rG = randomizedGraph(G, RANDOMIZED_WEIGHT_VARIATION)
+    if init:
+        rG = G.copy()
+    else:
+        rG = randomizedGraph(G, RANDOMIZED_WEIGHT_VARIATION)
 
     useMST: bool = random.choice([True, False])
 
@@ -74,10 +79,10 @@ class EmployedBee:
         self.regretTree: nxGraph = None  # when the program decides to prune a leaf even when it knows the cost will increase, the program store the previous tree
         self.regretLeaves: List[int] = []
         self.regretTreeCost: float = 0
-        self.scout()
+        self.scout(init = True)
 
-    def scout(self) -> None:
-        self.solution = randomDominatingTree(self.G)
+    def scout(self, init: bool = False) -> None:
+        self.solution = randomDominatingTree(self.G, init = init)
         self.unimprovedTimes = 0
         if len(self.solution) == 1:
             self.currentCost = 0
