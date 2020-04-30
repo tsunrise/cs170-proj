@@ -12,10 +12,11 @@ nxGraph = nx.classes.Graph
 
 # CONSTANTS
 
-VERSION = "regretV2"
+VERSION = "regretV3"
 
 RANDOMIZED_WEIGHT_VARIATION: float = 0.35
 REGRET_PRUNE_RATE: float = 0.18
+SPT_RATE: float = 0.2
 
 def randomDominatingTree(G: nxGraph, init: bool = False) -> nxGraph:
     """
@@ -82,6 +83,9 @@ class EmployedBee:
         self.scout(init = True)
 
     def scout(self, init: bool = False) -> None:
+        # has some chance to use best SPT
+        if not init and random.random() < SPT_RATE:
+            init = True
         self.solution = randomDominatingTree(self.G, init = init)
         self.unimprovedTimes = 0
         if len(self.solution) == 1:
