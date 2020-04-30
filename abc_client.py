@@ -67,7 +67,7 @@ if __name__ == "__main__":
             failure = []
             for task in tasks:
                 count += 1
-                # print("Solving: %s (%d/%d)" % (task, count, len(tasks)))
+                print("Solving: %s (%d/%d)" % (task, count, len(tasks)))
                 success = solveFile(task, log=True)
                 if not success:
                     failure.append(task)
