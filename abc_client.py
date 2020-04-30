@@ -15,8 +15,9 @@ N_EMPLOYED = 20 # number of employed bees
 N_ONLOOKER = 5 # number of onlooker bees
 N_ITERATIONS = 50000 # number of iterations of ABC
 FIRE_LIMIT = 100 # maximum iterations allowed for a bee to not discover a better option
+TERMINATION_LIMIT = 5000 # the maximum number of iterations allowed for the whole not improve its solution
 
-def solveFile(fileName: str) -> bool:
+def solveFile(fileName: str, log = False) -> bool:
     """
     Solve a graph saved in ./inputs/{fileName}.in and output it in output folder. 
     Return if solve file succeed. 
@@ -24,7 +25,7 @@ def solveFile(fileName: str) -> bool:
 
     try:
         G = read_input_file("./inputs/%s.in" % fileName)
-        T = solver.ABC(G, N_EMPLOYED, N_ONLOOKER, N_ITERATIONS, FIRE_LIMIT)
+        T = solver.ABC(G, N_EMPLOYED, N_ONLOOKER, N_ITERATIONS, FIRE_LIMIT, TERMINATION_LIMIT, log = log)
         assert(is_valid_network(G, T))
 
         if os.path.exists("./outputs/%s.out" % fileName):
@@ -67,7 +68,7 @@ if __name__ == "__main__":
             for task in tasks:
                 count += 1
                 # print("Solving: %s (%d/%d)" % (task, count, len(tasks)))
-                success = solveFile(task)
+                success = solveFile(task, log=True)
                 if not success:
                     failure.append(task)
             if len(failure) != 0:

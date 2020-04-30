@@ -208,11 +208,12 @@ def zeroCostCheck(G: nxGraph) -> int:
     return -1
 
 
-def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int, log: bool = False) -> nxGraph:
+def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: int, termination_limit: int = 10000,log: bool = False) -> nxGraph:
     """
     The artificial bee algorithm. Return an approximate connected dominating tree with minimum routing cost. 
     n_iter: the total number of iterations
     fire_limit: the maximum number of iterations that a bee does not improve its solution (if the limit is exceeded, the bee scouts)
+    termination_limit: the maximum number of iterations allowed for the whole not improve its solution
     """
     
     # pre-sanity-check: zero-cost tree
@@ -228,7 +229,8 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
     # initialize employed bees
     bees: List[EmployedBee] = []
     isBeeImproved: List[bool]= [False] * n_employed
-
+    isThisIterImproved: bool = False
+    unimprovedCounter = 0
 
     for i in range(n_employed):
         bees.append(EmployedBee(G))
@@ -240,6 +242,8 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
         for index, bee in enumerate(bees):
             improved = bee.work() # employ(S)
             if bee.getSolutionCost() < bestBee.getSolutionCost():
+                isThisIterImproved = True
+                unimprovedCounter = 0
                 bestBee = bee
             if improved:
                 isBeeImproved[index] = True
@@ -259,6 +263,8 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
 
         improved = selectedBee.work()
         if selectedBee.getSolutionCost() < bestBee.getSolutionCost():
+            isThisIterImproved = True
+            unimprovedCounter = 0
             bestBee = selectedBee
         if improved:
             isBeeImproved[selectedIndex] = True
@@ -283,7 +289,15 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
             
             # reset bee improved list
             isBeeImproved[index] = False
+
+        if not isThisIterImproved:
+            unimprovedCounter += 1
+            if unimprovedCounter > termination_limit:
+                if log:
+                    print("(END) At iteration %d, the best cost is %f (working: %f, regret: %f, bee_id: %s), %d scouts are called" % (curr_iter, bestBee.getSolutionCost(), bestBee.currentCost, bestBee.regretTreeCost if bestBee.regretTree is not None else -1, bestBee.id, bee_counter))
+                return bestBee.solution
         
+        isThisIterImproved = False
         if log and curr_iter % 100 == 0:
             print("At iteration %d, the best cost is %f (working: %f, regret: %f, bee_id: %s), %d scouts are called" % (curr_iter, bestBee.getSolutionCost(), bestBee.currentCost, bestBee.regretTreeCost if bestBee.regretTree is not None else -1, bestBee.id, bee_counter))
         if bestBee.getSolutionCost() - 0 < 1e-5:
