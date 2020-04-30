@@ -95,6 +95,8 @@ if __name__ == "__main__":
                     success = solveFile(task)
                     if not success:
                         failure.append(task)
+                    if os.path.exists("./terminate.flag"):
+                        return
                 if len(failure) != 0:
                     print("Thread %d reports that %d/%d files are not solved successfully. Please check. " % (thread_num, len(failure), len(subtasks)))
                     for f in failure:
