@@ -50,6 +50,7 @@ def solveFile(fileName: str) -> bool:
 
 if __name__ == "__main__":
     # online algo until terminated manually
+    print("Solver version: %s" % solver.VERSION)
     running_round = 1
     while not os.path.exists("./terminate.flag"):
         parallel = False
