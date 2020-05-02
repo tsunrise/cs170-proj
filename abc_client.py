@@ -9,6 +9,7 @@ import sys
 import solver
 import multiprocessing
 import os
+import re
 
 solver.RANDOMIZED_WEIGHT_VARIATION = 0.37 # graph randomized level
 N_EMPLOYED = 20 # number of employed bees
@@ -16,6 +17,8 @@ N_ONLOOKER = 5 # number of onlooker bees
 N_ITERATIONS = 50000 # number of iterations of ABC
 FIRE_LIMIT = 100 # maximum iterations allowed for a bee to not discover a better option
 TERMINATION_LIMIT = 5000 # the maximum number of iterations allowed for the whole not improve its solution
+
+FILTERS = ["large-3[3-9][0-9]"] # run which file
 
 def solveFile(fileName: str, log = False) -> bool:
     """
@@ -30,10 +33,10 @@ def solveFile(fileName: str, log = False) -> bool:
 
         if os.path.exists("./outputs/%s.out" % fileName):
             oldT = read_output_file("./outputs/%s.out" % fileName, G)
-            if len(T) == 1:
+            if len(T) == 1 and len(oldT) != 1:
                 write_output_file(T, "./outputs/%s.out" % fileName)
                 return True
-            if len(oldT) == 1 or average_pairwise_distance(oldT) < average_pairwise_distance(T):
+            if len(oldT) == 1 or average_pairwise_distance(oldT) <= average_pairwise_distance(T):
                 # do nothing
                 print("File %s is skipped because old tree is better. " % fileName)
                 return True
@@ -61,7 +64,8 @@ if __name__ == "__main__":
                 parallel = True
 
         # read number of tasks
-        tasks = [f[:-3] for f in os.listdir("./inputs/") if f[-3:] == ".in"]
+        tasks = [f[:-3] for f in os.listdir("./inputs/") if f[-3:] == ".in" and sum([bool(re.match(fil, f[:-3])) for fil in FILTERS]) > 0]
+        print("Program will perform those tasks: %s" % str(tasks))
         if not parallel:
             count = 0
             failure = []
