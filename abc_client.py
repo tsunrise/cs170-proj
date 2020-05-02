@@ -59,12 +59,17 @@ if __name__ == "__main__":
     while not os.path.exists("./terminate.flag"):
         parallel = False
         num_cores = multiprocessing.cpu_count()
-        if len(sys.argv) == 2:
+        if len(sys.argv) >= 2:
             if sys.argv[1] == "-p" or sys.argv[1] == "--parallel":
                 parallel = True
 
+        runAll = False
+        if len(sys.argv) >= 3:
+            if sys.argv[2] == "-a" or sys.argv[2] == "--all":
+                runAll = True
+
         # read number of tasks
-        tasks = [f[:-3] for f in os.listdir("./inputs/") if f[-3:] == ".in" and sum([bool(re.match(fil, f[:-3])) for fil in FILTERS]) > 0]
+        tasks = [f[:-3] for f in os.listdir("./inputs/") if f[-3:] == ".in" and (runAll or sum([bool(re.match(fil, f[:-3])) for fil in FILTERS]) > 0)]
         print("Program will perform those tasks: %s" % str(tasks))
         if not parallel:
             count = 0
