@@ -58,6 +58,7 @@ if __name__ == "__main__":
     running_round = 1
     while not os.path.exists("./terminate.flag"):
         parallel = False
+        runAll = False
         num_cores = multiprocessing.cpu_count()
         if len(sys.argv) >= 2:
             if sys.argv[1] == "-p" or sys.argv[1] == "--parallel":
@@ -65,7 +66,7 @@ if __name__ == "__main__":
             if sys.argv[1] == "-a" or sys.argv[1] == "--all":
                 runAll = True
 
-        runAll = False
+       
         if len(sys.argv) >= 3:
             if sys.argv[2] == "-a" or sys.argv[2] == "--all":
                 runAll = True
