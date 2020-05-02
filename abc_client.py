@@ -62,6 +62,8 @@ if __name__ == "__main__":
         if len(sys.argv) >= 2:
             if sys.argv[1] == "-p" or sys.argv[1] == "--parallel":
                 parallel = True
+            if sys.argv[1] == "-a" or sys.argv[1] == "--all":
+                runAll = True
 
         runAll = False
         if len(sys.argv) >= 3:
