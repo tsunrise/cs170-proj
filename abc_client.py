@@ -9,7 +9,7 @@ import sys
 import solver
 import multiprocessing
 import os
-import re
+import json
 
 solver.RANDOMIZED_WEIGHT_VARIATION = 0.37 # graph randomized level
 N_EMPLOYED = 20 # number of employed bees
@@ -18,7 +18,7 @@ N_ITERATIONS = 50000 # number of iterations of ABC
 FIRE_LIMIT = 100 # maximum iterations allowed for a bee to not discover a better option
 TERMINATION_LIMIT = 5000 # the maximum number of iterations allowed for the whole not improve its solution
 
-FILTERS = ["large-3[3-9][0-9]"] # run which file
+FRACTION = 0.3
 
 def solveFile(fileName: str, log = False) -> bool:
     """
@@ -51,29 +51,66 @@ def solveFile(fileName: str, log = False) -> bool:
         print("ERROR: An error occured when processing on %s: %s" % (fileName, sys.exc_info()[0]))
         return False
 
+# selective processing (based on online rank)
+def getFirst(fraction: float):
+    data = None
+    with open("rank.json","r") as f:
+        data = json.load(f)
+    for v in data.values():
+        v.sort(key = lambda x: x[1])
+    def getRank(value):
+        rank = 1
+        for v in value:
+            if v[0] == 'Salieri':
+                return rank
+            rank += 1
+        return -1
+    stat = dict()
+    for k, v in data.items():
+        rank = getRank(v)
+        if rank in stat:
+            stat[rank].append(k)
+        else:
+            stat[rank] = [k]
+
+    keys = sorted(stat.keys(), reverse = True)
+    values = []
+    for key in keys:
+        values.extend(stat[key])
+    until = len(values)
+    until = min(until - 1, round(until / 3))
+    return values[:until]
+
 
 if __name__ == "__main__":
     # online algo until terminated manually
     print("Solver version: %s" % solver.VERSION)
+
+    parallel = False
+    runAll = False
+    num_cores = multiprocessing.cpu_count()
+    if len(sys.argv) >= 2:
+        if sys.argv[1] == "-p" or sys.argv[1] == "--parallel":
+            parallel = True
+        if sys.argv[1] == "-a" or sys.argv[1] == "--all":
+            runAll = True
+
+    
+    if len(sys.argv) >= 3:
+        if sys.argv[2] == "-a" or sys.argv[2] == "--all":
+            runAll = True
+
+
+    if runAll:
+        tasks = [f[:-3] for f in os.listdir("./inputs/") if f[-3:] == ".in"]
+    else:
+        tasks = getFirst(FRACTION)
+    
+    # read number of tasks
+    print("Program will perform those tasks: %s" % str(tasks))
     running_round = 1
     while not os.path.exists("./terminate.flag"):
-        parallel = False
-        runAll = False
-        num_cores = multiprocessing.cpu_count()
-        if len(sys.argv) >= 2:
-            if sys.argv[1] == "-p" or sys.argv[1] == "--parallel":
-                parallel = True
-            if sys.argv[1] == "-a" or sys.argv[1] == "--all":
-                runAll = True
 
-       
-        if len(sys.argv) >= 3:
-            if sys.argv[2] == "-a" or sys.argv[2] == "--all":
-                runAll = True
-
-        # read number of tasks
-        tasks = [f[:-3] for f in os.listdir("./inputs/") if f[-3:] == ".in" and (runAll or sum([bool(re.match(fil, f[:-3])) for fil in FILTERS]) > 0)]
-        print("Program will perform those tasks: %s" % str(tasks))
         if not parallel:
             count = 0
             failure = []
