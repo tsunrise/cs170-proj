@@ -12,7 +12,7 @@ nxGraph = nx.classes.Graph
 
 # CONSTANTS
 
-VERSION = "regretV3"
+VERSION = "regretV3.1"
 
 RANDOMIZED_WEIGHT_VARIATION: float = 0.35
 REGRET_PRUNE_RATE: float = 0.18
@@ -295,7 +295,7 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
             if unimprovedCounter > termination_limit:
                 if log:
                     print("(END) At iteration %d, the best cost is %f (working: %f, regret: %f, bee_id: %s), %d scouts are called" % (curr_iter, bestBee.getSolutionCost(), bestBee.currentCost, bestBee.regretTreeCost if bestBee.regretTree is not None else -1, bestBee.id, bee_counter))
-                return bestBee.solution
+                return bestBee.getSolution()
         
         isThisIterImproved = False
         if log and curr_iter % 100 == 0:
@@ -303,9 +303,9 @@ def ABC(G: nxGraph, n_employed: int, n_onlooker:int, n_iter: int, fire_limit: in
         if bestBee.getSolutionCost() - 0 < 1e-5:
             if log:
                 print("Found a bee whose cost is zero! Program finished early at iteration %d. " % curr_iter)
-            return bestBee.solution
+            return bestBee.getSolution()
     # Final Decision
-    return bestBee.solution
+    return bestBee.getSolution()
 
 
 
