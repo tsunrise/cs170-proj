@@ -18,8 +18,7 @@ N_ITERATIONS = 50000 # number of iterations of ABC
 FIRE_LIMIT = 100 # maximum iterations allowed for a bee to not discover a better option
 TERMINATION_LIMIT = 5000 # the maximum number of iterations allowed for the whole not improve its solution
 
-FRACTION = 0.3
-
+TEAM_NAME = 'Salieri'
 def solveFile(fileName: str, log = False) -> bool:
     """
     Solve a graph saved in ./inputs/{fileName}.in and output it in output folder. 
@@ -52,19 +51,23 @@ def solveFile(fileName: str, log = False) -> bool:
         return False
 
 # selective processing (based on online rank)
-def getFirst(fraction: float):
+def getNonFirst():
     data = None
     with open("rank.json","r") as f:
         data = json.load(f)
     for v in data.values():
         v.sort(key = lambda x: x[1])
     def getRank(value):
+        curr_cost = -1
+        for v in value:
+            if v[0] == TEAM_NAME:
+                curr_cost = v[1]
         rank = 1
         for v in value:
-            if v[0] == 'Salieri':
-                return rank
-            rank += 1
-        return -1
+            if v[0] != TEAM_NAME and v[1] < curr_cost:
+                rank += 1
+        
+        return rank
     stat = dict()
     for k, v in data.items():
         rank = getRank(v)
@@ -76,10 +79,9 @@ def getFirst(fraction: float):
     keys = sorted(stat.keys(), reverse = True)
     values = []
     for key in keys:
-        values.extend(stat[key])
-    until = len(values)
-    until = min(until - 1, round(until / 3))
-    return values[:until]
+        if key != 1:
+            values.extend(stat[key])
+    return values
 
 
 if __name__ == "__main__":
@@ -104,7 +106,11 @@ if __name__ == "__main__":
     if runAll:
         tasks = [f[:-3] for f in os.listdir("./inputs/") if f[-3:] == ".in"]
     else:
-        tasks = getFirst(FRACTION)
+        try:
+            tasks = getNonFirst()
+        except:
+            print("Please place rank.json in the same directory. Read README for more details. ")
+            exit()
     
     # read number of tasks
     print("Program will perform those tasks: %s" % str(tasks))
