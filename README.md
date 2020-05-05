@@ -1,6 +1,9 @@
 # CS 170 Project Spring 2020
 
+The goal of this project is to find a minimum weight dominating set. Check the spec for details. 
+
 Files:
+
 - `abc_client.py`: main function to run
 - `parse.py`: functions to read/write inputs and outputs
 - `solver.py`: where you should be writing your code to solve inputs
