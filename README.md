@@ -1,5 +1,7 @@
 # CS 170 Project Spring 2020
 
+Tom Shen, Alan Zhu, Ziang Gao
+
 The goal of this project is to find a connected dominating set that minimizes average pairwise routing distance. Check the <a href = "https://github.com/tsunrise/cs170-proj/blob/master/spec.pdf">spec</a> for details. 
 
 Check out the algorithm description <a href="https://github.com/tsunrise/cs170-proj/blob/master/algorithm.pdf">here</a>.
